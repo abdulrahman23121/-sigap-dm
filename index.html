@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SIGAP-DM | Sistem Informasi Gula Darah &amp; Asuhan Pasien DM</title>
+
+<!-- PWA: agar bisa "Install app" / Add to Home Screen di Android -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#146356">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIGAP-DM">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= SCREEN: LOGIN ================= -->
+<section id="screen-login" class="screen active-screen">
+  <div class="login-wrap">
+    <div class="login-logo">🩺</div>
+    <h1 class="app-title">SIGAP-DM</h1>
+    <p class="app-sub">Sistem Informasi Gula Darah &amp; Asuhan Pasien Diabetes Melitus</p>
+
+    <div class="role-tabs">
+      <button type="button" class="role-tab active" data-role="pasien">Pasien / Keluarga</button>
+      <button type="button" class="role-tab" data-role="perawat">Perawat / Tenaga Medis</button>
+    </div>
+
+    <!-- Login Pasien -->
+    <form id="form-login" class="login-form" autocomplete="off">
+      <label class="field-label" for="login-email">Email</label>
+      <input type="email" id="login-email" class="input" placeholder="nama@email.com" required>
+
+      <label class="field-label" for="login-password">Password</label>
+      <input type="password" id="login-password" class="input" placeholder="Password" required>
+
+      <p id="login-error" class="form-error hidden"></p>
+
+      <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+      <button type="button" id="btn-demo-login" class="btn btn-outline btn-block">🚀 Coba Demo Pasien</button>
+    </form>
+    <p class="login-hint">Belum punya akun? Login akan otomatis mendaftarkan akun baru bila email belum terdaftar.</p>
+
+    <!-- Login Perawat -->
+    <form id="form-login-nurse" class="login-form hidden" autocomplete="off">
+      <label class="field-label" for="nurse-name">Nama Perawat</label>
+      <input type="text" id="nurse-name" class="input" placeholder="Nama Anda" required>
+
+      <label class="field-label" for="nurse-code">Kode Akses Fasyankes</label>
+      <input type="text" id="nurse-code" class="input" placeholder="Contoh: PKM-2024" required>
+
+      <p id="nurse-login-error" class="form-error hidden"></p>
+
+      <button type="submit" class="btn btn-primary btn-block">Masuk sebagai Perawat</button>
+    </form>
+    <p id="nurse-hint" class="login-hint hidden">Kode akses menghubungkan Anda ke data pasien yang tersimpan pada perangkat ini &mdash; gunakan pada perangkat/klinik yang sama dengan pasien terdaftar.</p>
+  </div>
+</section>
+
+<!-- ================= SCREEN: PIN ================= -->
+<section id="screen-pin" class="screen">
+  <div class="login-wrap">
+    <div class="login-logo">🔒</div>
+    <h1 class="app-title">Masukkan PIN</h1>
+    <p class="app-sub">Keamanan tambahan akun Anda</p>
+    <input type="password" id="pin-input" class="input pin-input" maxlength="4" inputmode="numeric" placeholder="••••">
+    <p id="pin-error" class="form-error hidden"></p>
+    <button type="button" id="btn-pin-submit" class="btn btn-primary btn-block">Masuk</button>
+    <button type="button" id="btn-pin-skip" class="btn btn-text btn-block">Lupa PIN? Logout</button>
+  </div>
+</section>
+
+<!-- ================= NURSE DASHBOARD (separate shell) ================= -->
+<section id="screen-nurse" class="screen">
+  <div class="nurse-shell">
+    <header class="topbar">
+      <div class="topbar-title">Dasbor Perawat</div>
+      <button id="btn-nurse-logout" class="icon-btn" title="Keluar">🚪</button>
+    </header>
+
+    <div class="nurse-body">
+      <div id="nurse-list-view">
+        <div class="nurse-welcome card">
+          <div>Halo, <strong id="nurse-name-display">Perawat</strong></div>
+          <p class="stat-sub">Daftar pasien terhubung pada perangkat ini.</p>
+        </div>
+        <input type="text" id="nurse-search" class="input" placeholder="🔍 Cari nama pasien...">
+        <div id="nurse-patient-list" class="list-wrap"></div>
+      </div>
+
+      <div id="nurse-detail-view" class="hidden">
+        <button id="btn-nurse-back" class="btn btn-text">← Kembali ke daftar pasien</button>
+
+        <div class="card patient-head">
+          <div>
+            <div id="nd-name" class="greeting-name">-</div>
+            <div id="nd-meta" class="stat-sub">-</div>
+          </div>
+          <div id="nd-flag" class="badge badge-neutral">Stabil</div>
+        </div>
+
+        <div class="quick-actions-row">
+          <a id="nd-call" class="btn btn-outline" href="#">📞 Telepon Pasien</a>
+          <a id="nd-wa" class="btn btn-outline" href="#" target="_blank" rel="noopener">💬 WhatsApp Pasien</a>
+        </div>
+
+        <h3 class="section-title">Riwayat Gula Darah</h3>
+        <div id="nd-glucose-history" class="list-wrap"></div>
+
+        <h3 class="section-title">Terapi / Obat</h3>
+        <div id="nd-med-list" class="list-wrap"></div>
+
+        <h3 class="section-title">Kirim Catatan ke Pasien</h3>
+        <div class="card form-card">
+          <textarea id="nd-note-input" class="input" rows="2" placeholder="Contoh: Kurangi konsumsi gula, kontrol ulang 3 hari lagi."></textarea>
+          <button id="btn-nd-send-note" class="btn btn-primary btn-block">📩 Kirim Catatan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell" class="app-shell">
+
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <button id="btn-theme-toggle" class="icon-btn" title="Mode Gelap">🌙</button>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="screen-dashboard" class="screen active-screen">
+      <div class="greeting-card card">
+        <div>
+          <div class="greeting-hello">Halo,</div>
+          <div id="dash-name" class="greeting-name">Pasien</div>
+        </div>
+        <div class="greeting-emoji">👋</div>
+      </div>
+
+      <div id="dash-alert" class="alert-box hidden"></div>
+      <div id="dash-nurse-note" class="nurse-note-box hidden"></div>
+
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-label">Gula Darah Terakhir</div>
+          <div id="dash-last-glucose" class="stat-value">-</div>
+          <div id="dash-last-status" class="badge badge-neutral">Belum ada data</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Jumlah Pemeriksaan</div>
+          <div id="dash-count-glucose" class="stat-value">0</div>
+          <div class="stat-sub">kali dicatat</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Jumlah Obat</div>
+          <div id="dash-count-meds" class="stat-value">0</div>
+          <div class="stat-sub">terdaftar</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Obat Diminum Hari Ini</div>
+          <div id="dash-meds-taken" class="stat-value">0/0</div>
+          <div class="stat-sub">dosis</div>
+        </div>
+      </div>
+
+      <h3 class="section-title">Menu Cepat</h3>
+      <div class="quick-menu">
+        <button class="quick-btn" data-goto="gula">🩸<span>Cek Gula</span></button>
+        <button class="quick-btn" data-goto="terapi">💊<span>Obat</span></button>
+        <button class="quick-btn" data-goto="edukasi">📘<span>Edukasi</span></button>
+        <button class="quick-btn" data-goto="progress">📈<span>Progress</span></button>
+      </div>
+
+      <h3 class="section-title">Keluarga &amp; Bantuan</h3>
+      <div class="card help-card">
+        <button id="btn-send-family-report" class="btn btn-outline btn-block">💬 Kirim Ringkasan ke Keluarga (WA)</button>
+        <button id="btn-share-location" class="btn btn-outline btn-block">📍 Bagikan Lokasi Saat Ini</button>
+        <button id="btn-open-emergency-from-dash" class="btn btn-danger btn-block">🚨 Situasi Darurat</button>
+      </div>
+    </section>
+
+    <!-- ============ GULA DARAH ============ -->
+    <section id="screen-gula" class="screen">
+      <h3 class="section-title">Input Gula Darah</h3>
+      <form id="form-glucose" class="card form-card">
+        <label class="field-label">Nilai Gula Darah (mg/dL)</label>
+        <input type="number" id="glucose-value" class="input" placeholder="Contoh: 120" required min="1">
+
+        <label class="field-label">Kondisi</label>
+        <select id="glucose-condition" class="input">
+          <option value="sebelum makan">Sebelum Makan</option>
+          <option value="sesudah makan">Sesudah Makan</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+
+        <label class="field-label">Catatan (opsional)</label>
+        <textarea id="glucose-note" class="input" rows="2" placeholder="Catatan tambahan..."></textarea>
+
+        <p id="glucose-error" class="form-error hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Data</button>
+      </form>
+
+      <h3 class="section-title">Riwayat Pemeriksaan</h3>
+      <div id="glucose-history" class="list-wrap">
+        <p class="empty-state">Belum ada data pemeriksaan.</p>
+      </div>
+    </section>
+
+    <!-- ============ TERAPI / OBAT ============ -->
+    <section id="screen-terapi" class="screen">
+      <h3 class="section-title">Tambah Obat</h3>
+      <form id="form-med" class="card form-card">
+        <label class="field-label">Nama Obat</label>
+        <input type="text" id="med-name" class="input" placeholder="Contoh: Metformin" required>
+
+        <label class="field-label">Dosis</label>
+        <input type="text" id="med-dose" class="input" placeholder="Contoh: 500mg" required>
+
+        <label class="field-label">Waktu Minum</label>
+        <input type="time" id="med-time" class="input" required>
+
+        <p id="med-error" class="form-error hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">➕ Tambah Obat</button>
+      </form>
+
+      <h3 class="section-title">Daftar Obat</h3>
+      <div id="med-list" class="list-wrap">
+        <p class="empty-state">Belum ada obat terdaftar.</p>
+      </div>
+    </section>
+
+    <!-- ============ EDUKASI ============ -->
+    <section id="screen-edukasi" class="screen">
+      <h3 class="section-title">Edukasi Diabetes</h3>
+      <div class="edu-grid" id="edu-grid"></div>
+    </section>
+
+    <!-- ============ PROGRESS ============ -->
+    <section id="screen-progress" class="screen">
+      <h3 class="section-title">Progress Gula Darah</h3>
+      <div class="stat-grid">
+        <div class="card stat-card">
+          <div class="stat-label">Jumlah Pemeriksaan</div>
+          <div id="prog-count" class="stat-value">0</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-label">Nilai Terbaru</div>
+          <div id="prog-last" class="stat-value">-</div>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <canvas id="glucose-chart" width="320" height="220"></canvas>
+        <p id="chart-empty" class="empty-state hidden">Belum cukup data untuk grafik.</p>
+      </div>
+    </section>
+
+    <!-- ============ PROFIL ============ -->
+    <section id="screen-profil" class="screen">
+      <h3 class="section-title">Profil Pasien</h3>
+      <form id="form-profile" class="card form-card">
+        <label class="field-label">Nama</label>
+        <input type="text" id="profile-name" class="input" placeholder="Nama lengkap" required>
+
+        <label class="field-label">Umur</label>
+        <input type="number" id="profile-age" class="input" placeholder="Umur" min="1" max="120">
+
+        <label class="field-label">Jenis Kelamin</label>
+        <select id="profile-gender" class="input">
+          <option value="Laki-laki">Laki-laki</option>
+          <option value="Perempuan">Perempuan</option>
+        </select>
+
+        <label class="field-label">Email</label>
+        <input type="email" id="profile-email" class="input" placeholder="Email" disabled>
+
+        <label class="field-label">Nomor HP / WhatsApp Pasien</label>
+        <input type="tel" id="profile-phone" class="input" placeholder="08xxxxxxxxxx">
+
+        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Profil</button>
+      </form>
+
+      <h3 class="section-title">Kontak Darurat</h3>
+      <form id="form-emergency-contact" class="card form-card">
+        <label class="field-label">Nama Keluarga</label>
+        <input type="text" id="family-name" class="input" placeholder="Contoh: Ibu Siti (Anak)">
+
+        <label class="field-label">Nomor WhatsApp Keluarga</label>
+        <input type="tel" id="family-phone" class="input" placeholder="08xxxxxxxxxx">
+
+        <label class="field-label">Nomor WhatsApp Perawat / Puskesmas (opsional)</label>
+        <input type="tel" id="nurse-phone" class="input" placeholder="08xxxxxxxxxx">
+
+        <button type="submit" class="btn btn-primary btn-block">💾 Simpan Kontak Darurat</button>
+      </form>
+
+      <div class="card settings-card">
+        <div class="setting-row">
+          <span>👪 Berbagi Data dengan Keluarga</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-share">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <span>🌙 Mode Gelap</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-dark">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card settings-card">
+        <div class="setting-row">
+          <span>🔒 PIN 4 Digit</span>
+          <button id="btn-set-pin" class="btn btn-small btn-outline">Atur PIN</button>
+        </div>
+        <div id="pin-set-area" class="hidden">
+          <label class="field-label">PIN Baru (4 digit)</label>
+          <input type="password" id="new-pin" class="input pin-input-small" maxlength="4" inputmode="numeric" placeholder="••••">
+          <button id="btn-save-pin" class="btn btn-primary btn-block">Simpan PIN</button>
+        </div>
+      </div>
+
+      <button id="btn-logout" class="btn btn-danger btn-block">🚪 Logout</button>
+    </section>
+
+  </main>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-goto="dashboard">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-btn" data-goto="gula">
+      <span class="nav-icon">🩸</span><span>Gula</span>
+    </button>
+    <button class="nav-btn" data-goto="terapi">
+      <span class="nav-icon">💊</span><span>Terapi</span>
+    </button>
+    <button class="nav-btn" data-goto="edukasi">
+      <span class="nav-icon">📘</span><span>Edukasi</span>
+    </button>
+    <button class="nav-btn" data-goto="profil">
+      <span class="nav-icon">👤</span><span>Profil</span>
+    </button>
+  </nav>
+
+  <!-- ============ FLOATING SOS BUTTON ============ -->
+  <button id="btn-sos" class="sos-fab" title="Darurat">🚨<span>SOS</span></button>
+
+</div>
+
+<!-- ============ EMERGENCY MODAL ============ -->
+<div id="emergency-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>🚨 Bantuan Darurat</span>
+      <button id="btn-close-emergency" class="icon-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="emergency-status" class="alert-box"></div>
+      <div id="emergency-location" class="location-box">📍 Mendeteksi lokasi...</div>
+      <p class="modal-note">Pilih tindakan di bawah ini. Nomor akan terisi otomatis dari kontak yang tersimpan di Profil, dan lokasi Anda saat ini otomatis disertakan pada pesan WhatsApp.</p>
+
+      <a href="tel:119" class="btn btn-danger btn-block">📞 Telepon Ambulans (119)</a>
+      <a id="emg-call-family" href="#" class="btn btn-outline btn-block">📞 Telepon Keluarga</a>
+      <a id="emg-wa-family" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-block">💬 Kirim WhatsApp Darurat ke Keluarga</a>
+      <a id="emg-wa-nurse" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-block hidden">💬 Kirim WhatsApp Darurat ke Perawat</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "SIGAP-DM — Gula Darah & Asuhan Pasien DM",
+  "short_name": "SIGAP-DM",
+  "description": "Pemantauan gula darah, terapi obat, dan bantuan darurat untuk pasien Diabetes Melitus.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F7F6",
+  "theme_color": "#146356",
+  "lang": "id",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
